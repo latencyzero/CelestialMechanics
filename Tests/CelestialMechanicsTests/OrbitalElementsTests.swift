@@ -30,7 +30,7 @@ OrbitalElementsTests
 		#expect(abs(tenDaysLater.daysElapsed(since: epoch) - 10.0) < 0.0001)
 	}
 
-	@Test("Circular orbit holds a constant radius", arguments: stride(from: 0.0, through: 500.0, by: 37.0))
+	@Test("Circular orbit holds a constant radius", arguments: Array(stride(from: 0.0, through: 500.0, by: 37.0)))
 	func circularOrbitHoldsConstantRadius(daysElapsed inDaysElapsed: Double)
 	{
 		let elements = CircularOrbitElements(

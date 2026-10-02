@@ -25,6 +25,16 @@ public struct CartesianPosition : Codable, Equatable, Sendable
 		self.z = inZ
 	}
 
+	public var magnitude : Double
+	{
+		return (self.x * self.x + self.y * self.y + self.z * self.z).squareRoot()
+	}
+
+	public func distance(to inOther: CartesianPosition) -> Double
+	{
+		return (inOther - self).magnitude
+	}
+
 	public static func + (inLeft: CartesianPosition, inRight: CartesianPosition) -> CartesianPosition
 	{
 		return CartesianPosition(x: inLeft.x + inRight.x, y: inLeft.y + inRight.y, z: inLeft.z + inRight.z)
