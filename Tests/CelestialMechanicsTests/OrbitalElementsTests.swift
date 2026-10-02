@@ -3,31 +3,35 @@
 //  CelestialMechanicsTests
 //
 
-import XCTest
+import Foundation
+import Testing
 @testable import CelestialMechanics
 
-final
-class
-OrbitalElementsTests : XCTestCase
+@Suite("Orbital Elements")
+struct
+OrbitalElementsTests
 {
-	func testJulianDateRoundTrip()
+	@Test("JulianDate round-trips through Date")
+	func julianDateRoundTrip()
 	{
 		let originalDate = Date()
 		let julianDate = JulianDate(date: originalDate)
 		let roundTrippedDate = julianDate.asDate
 
-		XCTAssertEqual(originalDate.timeIntervalSince1970, roundTrippedDate.timeIntervalSince1970, accuracy: 0.001)
+		#expect(abs(originalDate.timeIntervalSince1970 - roundTrippedDate.timeIntervalSince1970) < 0.001)
 	}
 
-	func testJulianDateDaysElapsed()
+	@Test("JulianDate computes days elapsed")
+	func julianDateDaysElapsed()
 	{
 		let epoch = JulianDate(date: Date())
 		let tenDaysLater = JulianDate(epoch.value + 10.0)
 
-		XCTAssertEqual(tenDaysLater.daysElapsed(since: epoch), 10.0, accuracy: 0.0001)
+		#expect(abs(tenDaysLater.daysElapsed(since: epoch) - 10.0) < 0.0001)
 	}
 
-	func testCircularOrbitHoldsConstantRadius()
+	@Test("Circular orbit holds a constant radius", arguments: stride(from: 0.0, through: 500.0, by: 37.0))
+	func circularOrbitHoldsConstantRadius(daysElapsed inDaysElapsed: Double)
 	{
 		let elements = CircularOrbitElements(
 			orbitRadiusInMeters: 1.0e11,
@@ -35,17 +39,15 @@ OrbitalElementsTests : XCTestCase
 			startingAngle: 0.3,
 			epoch: JulianDate(2_460_000.0))
 
-		for daysElapsed in stride(from: 0.0, through: 500.0, by: 37.0)
-		{
-			let date = JulianDate(elements.epoch.value + daysElapsed)
-			let position = elements.position(atDate: date)
-			let radius = (position.x * position.x + position.y * position.y).squareRoot()
+		let date = JulianDate(elements.epoch.value + inDaysElapsed)
+		let position = elements.position(atDate: date)
+		let radius = (position.x * position.x + position.y * position.y).squareRoot()
 
-			XCTAssertEqual(radius, elements.orbitRadiusInMeters, accuracy: 1.0)
-		}
+		#expect(abs(radius - elements.orbitRadiusInMeters) < 1.0)
 	}
 
-	func testCircularOrbitReturnsToStartAfterOnePeriod()
+	@Test("Circular orbit returns to its start after one period")
+	func circularOrbitReturnsToStartAfterOnePeriod()
 	{
 		let elements = CircularOrbitElements(
 			orbitRadiusInMeters: 2.0e11,
@@ -56,11 +58,12 @@ OrbitalElementsTests : XCTestCase
 		let atEpoch = elements.position(atDate: elements.epoch)
 		let afterOnePeriod = elements.position(atDate: JulianDate(elements.epoch.value + elements.orbitPeriodInDays))
 
-		XCTAssertEqual(atEpoch.x, afterOnePeriod.x, accuracy: 0.01)
-		XCTAssertEqual(atEpoch.y, afterOnePeriod.y, accuracy: 0.01)
+		#expect(abs(atEpoch.x - afterOnePeriod.x) < 0.01)
+		#expect(abs(atEpoch.y - afterOnePeriod.y) < 0.01)
 	}
 
-	func testTransitReachesEndpointsAtBoundaryTimes()
+	@Test("Transit reaches its endpoints at the boundary times")
+	func transitReachesEndpointsAtBoundaryTimes()
 	{
 		let departure = JulianDate(2_460_000.0)
 		let arrival = JulianDate(2_460_030.0)
@@ -70,11 +73,12 @@ OrbitalElementsTests : XCTestCase
 			departure: departure,
 			arrival: arrival)
 
-		XCTAssertEqual(parameters.position(atDate: departure), parameters.departurePosition)
-		XCTAssertEqual(parameters.position(atDate: arrival), parameters.arrivalPosition)
+		#expect(parameters.position(atDate: departure) == parameters.departurePosition)
+		#expect(parameters.position(atDate: arrival) == parameters.arrivalPosition)
 	}
 
-	func testTransitReachesMidpointAtHalfwayTime()
+	@Test("Transit reaches the midpoint at the halfway time")
+	func transitReachesMidpointAtHalfwayTime()
 	{
 		let departure = JulianDate(2_460_000.0)
 		let arrival = JulianDate(2_460_030.0)
@@ -87,19 +91,21 @@ OrbitalElementsTests : XCTestCase
 		let midDate = JulianDate((departure.value + arrival.value) / 2.0)
 		let midPosition = parameters.position(atDate: midDate)
 
-		XCTAssertEqual(midPosition.x, 0.5e11, accuracy: 1.0)
+		#expect(abs(midPosition.x - 0.5e11) < 1.0)
 	}
 
 	//	This one actually calls SwiftAA, so it needs network access to resolve the
 	//	dependency the first time, and confirms the whole fixedBody path is wired up.
 	//	Real Earth orbit is elliptical (roughly 0.983-1.017 AU), hence the loose tolerance.
-	func testEarthFixedBodyIsRoughlyOneAstronomicalUnitFromTheSun()
+	@Test("Earth (fixed body) is roughly 1 AU from the Sun")
+	func earthFixedBodyIsRoughlyOneAstronomicalUnitFromTheSun()
+		throws
 	{
 		let position = OrbitalElements.position(ofKind: .fixedBody(.earth), atDate: Date())
-		let radiusInMeters = (position.x * position.x + position.y * position.y + position.z * position.z).squareRoot()
-		let oneAstronomicalUnitInMeters = SolarSystemData.meanOrbitRadiusInMeters[.earth]!
+		let radiusInMeters = position.magnitude
+		let oneAstronomicalUnitInMeters = try #require(SolarSystemData.meanOrbitRadiusInMeters[.earth])
 
 		let percentDifference = abs(radiusInMeters - oneAstronomicalUnitInMeters) / oneAstronomicalUnitInMeters
-		XCTAssertLessThan(percentDifference, 0.02)
+		#expect(percentDifference < 0.02)
 	}
 }
