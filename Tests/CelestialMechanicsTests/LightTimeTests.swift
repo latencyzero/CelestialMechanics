@@ -45,7 +45,7 @@ LightTimeTests
 	@Test("Earth to Mars is within the known range")
 	func earthToMarsIsWithinKnownRange()
 	{
-		let seconds = LightTime.seconds(fromKind: .fixedBody(.earth), toKind: .fixedBody(.mars), atDate: Date())
+		let seconds = LightTime.seconds(fromPlacement: .ephemeris(.earth), toPlacement: .ephemeris(.mars), atDate: Date())
 
 		#expect(seconds > 3.0 * 60.0)
 		#expect(seconds < 22.5 * 60.0)

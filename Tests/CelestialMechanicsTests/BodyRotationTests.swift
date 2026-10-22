@@ -55,7 +55,7 @@ BodyRotationTests
 	{
 		let noon = Date(timeIntervalSince1970: 1_774_008_000.0)		//	2026-03-20 12:00 UTC
 		let orientation = BodyRotation.orientation(of: .earth, atDate: noon)
-		let earth = OrbitalElements.position(ofKind: .fixedBody(.earth), atDate: noon)
+		let earth = OrbitalElements.position(of: .ephemeris(.earth), atDate: noon)
 		let towardSun = (-1.0 / earth.magnitude) * earth
 
 		//	Compare them in Earth’s equatorial plane…
@@ -73,8 +73,8 @@ BodyRotationTests
 	func
 	orbitNormal(of inPlanet: PlanetIdentifier) -> CartesianPosition
 	{
-		let now = OrbitalElements.position(ofKind: .fixedBody(inPlanet), atDate: Self.date)
-		let later = OrbitalElements.position(ofKind: .fixedBody(inPlanet), atDate: Self.date.addingTimeInterval(86_400.0))
+		let now = OrbitalElements.position(of: .ephemeris(inPlanet), atDate: Self.date)
+		let later = OrbitalElements.position(of: .ephemeris(inPlanet), atDate: Self.date.addingTimeInterval(86_400.0))
 		let n = CartesianPosition(x: now.y * later.z - now.z * later.y,
 									y: now.z * later.x - now.x * later.z,
 									z: now.x * later.y - now.y * later.x)

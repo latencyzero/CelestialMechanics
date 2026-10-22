@@ -28,10 +28,10 @@ public enum LightTime
 		return inFrom.distance(to: inTo) / Self.speedOfLightInMetersPerSecond
 	}
 
-	public static func seconds(fromKind inFrom: LocationKind, toKind inTo: LocationKind, atDate inDate: Date) -> TimeInterval
+	public static func seconds(fromPlacement inFrom: Placement, toPlacement inTo: Placement, atDate inDate: Date) -> TimeInterval
 	{
-		let fromPosition = OrbitalElements.position(ofKind: inFrom, atDate: inDate)
-		let toPosition = OrbitalElements.position(ofKind: inTo, atDate: inDate)
+		let fromPosition = OrbitalElements.position(of: inFrom, atDate: inDate)
+		let toPosition = OrbitalElements.position(of: inTo, atDate: inDate)
 		return Self.seconds(from: fromPosition, to: toPosition)
 	}
 }

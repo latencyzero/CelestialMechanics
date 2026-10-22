@@ -8,8 +8,8 @@ import Foundation
 /**
 	The closed set of real solar-system bodies this package can ask SwiftAA for a
 	position. This list only grows if the solar system does -- it is emphatically not
-	how the server introduces new places into the game. See `LocationKind.circularOrbit`
-	for that; a `PlanetIdentifier` is only ever wrapped in `LocationKind.fixedBody`.
+	how the server introduces new places into the game. See `Placement.orbit`
+	for that; a `PlanetIdentifier` is only ever wrapped in `Placement.ephemeris`.
 
 	Stored as a `String` raw value (not the enum case itself) on the wire and in
 	`SwiftData`, so an unrecognized value from an older/newer server round-trips as

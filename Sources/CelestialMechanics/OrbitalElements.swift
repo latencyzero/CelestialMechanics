@@ -15,17 +15,46 @@ import SwiftAA
 
 public enum OrbitalElements
 {
-	public static func position(ofKind inKind: LocationKind, atDate inDate: Date) -> CartesianPosition
+	/**
+		The heliocentric position of `inPlacement` at `inDate`. `inParentPosition` is
+		the heliocentric position of the location it's "at" (the origin if none), and
+		`inParentPlacement` that location's placement, needed to place a surface
+		location on its body.
+	*/
+
+	public static func position(of inPlacement: Placement,
+									parentPosition inParentPosition: CartesianPosition = CartesianPosition(),
+									parentPlacement inParentPlacement: Placement? = nil,
+									atDate inDate: Date)
+		-> CartesianPosition
 	{
 		let julianDate = JulianDate(date: inDate)
 
-		switch inKind
+		switch inPlacement
 		{
-		case .fixedBody(let inPlanet):
+		case .ephemeris(let inPlanet):
 			return Self.heliocentricPosition(ofPlanet: inPlanet, atDate: inDate)
 
-		case .circularOrbit(let inElements):
-			return inElements.position(atDate: julianDate)
+		case .orbit(let inElements):
+			return inParentPosition + inElements.position(atDate: julianDate)
+
+		case .surface(let inCoordinates):
+			//	Only a real body has a radius and orientation. Anything else is
+			//	treated as being at the parent's center…
+
+			guard
+				case .ephemeris(let inPlanet)? = inParentPlacement
+			else
+			{
+				return inParentPosition
+			}
+
+			let orientation = BodyRotation.orientation(of: inPlanet, atDate: inDate)
+			let offset = inCoordinates.offset(radius: SolarSystemData.meanRadiusInMeters[inPlanet] ?? 0.0, orientation: orientation)
+			return inParentPosition + offset
+
+		case .attached(let inOffset):
+			return inParentPosition + inOffset
 
 		case .transit(let inParameters):
 			return inParameters.position(atDate: julianDate)

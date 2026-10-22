@@ -95,13 +95,13 @@ OrbitalElementsTests
 	}
 
 	//	This one actually calls SwiftAA, so it needs network access to resolve the
-	//	dependency the first time, and confirms the whole fixedBody path is wired up.
+	//	dependency the first time, and confirms the whole ephemeris path is wired up.
 	//	Real Earth orbit is elliptical (roughly 0.983-1.017 AU), hence the loose tolerance.
 	@Test("Earth (fixed body) is roughly 1 AU from the Sun")
 	func earthFixedBodyIsRoughlyOneAstronomicalUnitFromTheSun()
 		throws
 	{
-		let position = OrbitalElements.position(ofKind: .fixedBody(.earth), atDate: Date())
+		let position = OrbitalElements.position(of: .ephemeris(.earth), atDate: Date())
 		let radiusInMeters = position.magnitude
 		let oneAstronomicalUnitInMeters = try #require(SolarSystemData.meanOrbitRadiusInMeters[.earth])
 

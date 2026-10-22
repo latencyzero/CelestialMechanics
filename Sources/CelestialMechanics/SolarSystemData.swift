@@ -41,4 +41,21 @@ public enum SolarSystemData
 		.uranus		:	30_688.5,
 		.neptune	:	60_182.0,
 	]
+
+	/**
+		Mean radii, from the same fact sheet (and the IAU for the gas giants, whose
+		“surface” is the 1 bar level).
+	*/
+
+	public static let meanRadiusInMeters : [PlanetIdentifier : Double] =
+	[
+		.mercury	:	2_439_700.0,
+		.venus		:	6_051_800.0,
+		.earth		:	6_371_000.0,
+		.mars		:	3_389_500.0,
+		.jupiter	:	69_911_000.0,
+		.saturn		:	58_232_000.0,
+		.uranus		:	25_362_000.0,
+		.neptune	:	24_622_000.0,
+	]
 }
