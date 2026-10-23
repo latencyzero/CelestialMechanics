@@ -47,6 +47,23 @@ BodyRotationTests
 		#expect(abs(tilt - inExpectedDegrees) < 0.5)
 	}
 
+	//	Venus’s model is all constants and a linear W, so the generic form,
+	//	given the same numbers, must agree with it…
+
+	@Test("Orientation from constant elements matches a planet with constant elements")
+	func orientationFromConstantElements()
+	{
+		let expected = BodyRotation.orientation(of: .venus, atDate: Self.date)
+		let actual = BodyRotation.orientation(rightAscension: 272.76, declination: 67.16, w0: 160.20, spinRate: -1.4813688, atDate: Self.date)
+
+		#expect(abs(actual.northPole.x - expected.northPole.x) < 1.0e-12)
+		#expect(abs(actual.northPole.y - expected.northPole.y) < 1.0e-12)
+		#expect(abs(actual.northPole.z - expected.northPole.z) < 1.0e-12)
+		#expect(abs(actual.primeMeridian.x - expected.primeMeridian.x) < 1.0e-12)
+		#expect(abs(actual.primeMeridian.y - expected.primeMeridian.y) < 1.0e-12)
+		#expect(abs(actual.primeMeridian.z - expected.primeMeridian.z) < 1.0e-12)
+	}
+
 	//	At noon UTC the Sun is near Greenwich’s meridian, give or take the
 	//	equation of time (about −7½ minutes, or 2°, around the March equinox)…
 

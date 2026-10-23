@@ -78,7 +78,7 @@ public enum BodyRotation
 		//	The models use TDB, which runs about 69 s ahead of UTC. That's
 		//	nearly 0.3° of Earth's rotation, so it's worth adding…
 
-		let d = JulianDate(date: inDate.addingTimeInterval(Self.terrestrialTimeOffset)).daysElapsed(since: Self.j2000)
+		let d = Self.daysSinceJ2000(atDate: inDate)
 		let t = d / Self.daysPerJulianCentury
 
 		let alpha: Double
@@ -136,6 +136,44 @@ public enum BodyRotation
 		}
 
 		return (alpha, delta, reduced)
+	}
+
+	/**
+		The orientation of a body this package has no model for (a moon, a
+		station), from its constant IAU elements, all in degrees: the pole's
+		`inRightAscension` and `inDeclination` (ICRF/J2000), and the prime meridian
+		angle `inW0` at J2000.0, advancing by `inSpinRate` degrees per day
+		(negative for retrograde). This is the linear part of the IAU models, so
+		it leaves out the periodic terms and the pole's precession that
+		``orientation(of:atDate:)`` has for the planets.
+	*/
+
+	public static
+	func
+	orientation(rightAscension inRightAscension: Double, declination inDeclination: Double, w0 inW0: Double, spinRate inSpinRate: Double, atDate inDate: Date)
+		-> BodyOrientation
+	{
+		var w = (inW0 + inSpinRate * Self.daysSinceJ2000(atDate: inDate)).truncatingRemainder(dividingBy: 360.0)
+		if w < 0.0
+		{
+			w += 360.0
+		}
+
+		return Self.orientation(rightAscension: inRightAscension, declination: inDeclination, primeMeridianAngle: w)
+	}
+
+	/**
+		Days since J2000.0 in TDB, the time argument of the IAU models. TDB runs
+		about 69 s ahead of UTC, which is nearly 0.3° of Earth's rotation, so it's
+		worth adding.
+	*/
+
+	private
+	static
+	func
+	daysSinceJ2000(atDate inDate: Date) -> Double
+	{
+		return JulianDate(date: inDate.addingTimeInterval(Self.terrestrialTimeOffset)).daysElapsed(since: Self.j2000)
 	}
 
 	/**
