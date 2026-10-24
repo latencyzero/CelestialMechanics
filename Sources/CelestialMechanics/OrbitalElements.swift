@@ -32,8 +32,10 @@ public enum OrbitalElements
 
 		switch inPlacement
 		{
-		case .ephemeris(let inPlanet):
-			return Self.heliocentricPosition(ofPlanet: inPlanet, atDate: inDate)
+		case .ephemeris(let inBody):
+			//	A body this build doesn't know can only sit where its parent is…
+
+			return Self.heliocentricPosition(ofBody: inBody, atDate: inDate) ?? inParentPosition
 
 		case .orbit(let inElements):
 			return inParentPosition + inElements.position(atDate: julianDate)
@@ -43,14 +45,14 @@ public enum OrbitalElements
 			//	treated as being at the parent's center…
 
 			guard
-				case .ephemeris(let inPlanet)? = inParentPlacement
+				case .ephemeris(let inBody)? = inParentPlacement,
+				let orientation = BodyRotation.orientation(of: inBody, atDate: inDate)
 			else
 			{
 				return inParentPosition
 			}
 
-			let orientation = BodyRotation.orientation(of: inPlanet, atDate: inDate)
-			let offset = inCoordinates.offset(radius: SolarSystemData.meanRadiusInMeters[inPlanet] ?? 0.0, orientation: orientation)
+			let offset = inCoordinates.offset(radius: SolarSystemData.meanRadiusInMeters[inBody] ?? 0.0, orientation: orientation)
 			return inParentPosition + offset
 
 		case .attached(let inOffset):
@@ -63,10 +65,48 @@ public enum OrbitalElements
 
 	//	MARK: - Fixed bodies (SwiftAA-backed)
 
-	private static func heliocentricPosition(ofPlanet inPlanet: PlanetIdentifier, atDate inDate: Date) -> CartesianPosition
+	/**
+		The heliocentric position of a real body, or nil if this build doesn't know it.
+	*/
+
+	private static func heliocentricPosition(ofBody inBody: BodyIdentifier, atDate inDate: Date) -> CartesianPosition?
 	{
 		let julianDay = JulianDay(inDate)
-		let body = Self.makeBody(for: inPlanet, julianDay: julianDay)
+
+		if inBody == .moon
+		{
+			//	SwiftAA gives the Moon's geocentric ecliptic coordinates in the same
+			//	frame (ecliptic and equinox of date) as the planets' heliocentric
+			//	ones, so it's Earth's position plus the Moon's offset from it…
+
+			let moon = Moon(julianDay: julianDay)
+			let longitude = moon.apparentEclipticCoordinates.celestialLongitude.inRadians.value
+			let latitude = moon.apparentEclipticCoordinates.celestialLatitude.inRadians.value
+			let radiusInMeters = moon.radiusVector.inMeters.value
+
+			guard
+				let earth = Self.heliocentricPosition(ofPlanet: .earth, julianDay: julianDay)
+			else
+			{
+				return nil
+			}
+
+			return earth + CartesianPosition(x: radiusInMeters * cos(latitude) * cos(longitude),
+												y: radiusInMeters * cos(latitude) * sin(longitude),
+												z: radiusInMeters * sin(latitude))
+		}
+
+		return Self.heliocentricPosition(ofPlanet: inBody, julianDay: julianDay)
+	}
+
+	private static func heliocentricPosition(ofPlanet inPlanet: BodyIdentifier, julianDay inJulianDay: JulianDay) -> CartesianPosition?
+	{
+		guard
+			let body = Self.makeBody(for: inPlanet, julianDay: inJulianDay)
+		else
+		{
+			return nil
+		}
 
 		let longitude = body.heliocentricEclipticCoordinates.celestialLongitude.inRadians.value
 		let latitude = body.heliocentricEclipticCoordinates.celestialLatitude.inRadians.value
@@ -82,7 +122,8 @@ public enum OrbitalElements
 	//	are different concrete types -- Swift needs a named type to construct, and no
 	//	amount of protocol conformance removes that. Everything downstream of this
 	//	function (the caller, `HeliocentricPositionProviding`) doesn't need to know it.
-	private static func makeBody(for inPlanet: PlanetIdentifier, julianDay inJulianDay: JulianDay) -> any HeliocentricPositionProviding
+	//	Anything but a planet gives nil.
+	private static func makeBody(for inPlanet: BodyIdentifier, julianDay inJulianDay: JulianDay) -> (any HeliocentricPositionProviding)?
 	{
 		switch inPlanet
 		{
@@ -102,6 +143,8 @@ public enum OrbitalElements
 			return Uranus(julianDay: inJulianDay)
 		case .neptune:
 			return Neptune(julianDay: inJulianDay)
+		case .moon, .unknown:
+			return nil
 		}
 	}
 }

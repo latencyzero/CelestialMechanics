@@ -43,10 +43,11 @@ struct PlacementTests
 
 	@Test("The north pole location lies along the body’s pole")
 	func poleLocation()
+		throws
 	{
 		let earth = OrbitalElements.position(of: .ephemeris(.earth), atDate: Self.date)
 		let pole = OrbitalElements.position(of: .surface(SurfaceCoordinates(latitude: 90.0, longitude: 0.0)), parentPosition: earth, parentPlacement: .ephemeris(.earth), atDate: Self.date)
-		let up = BodyRotation.orientation(of: .earth, atDate: Self.date).northPole
+		let up = try #require(BodyRotation.orientation(of: .earth, atDate: Self.date)).northPole
 		let direction = (1.0 / pole.distance(to: earth)) * (pole - earth)
 
 		#expect(direction.distance(to: up) < 1e-9)

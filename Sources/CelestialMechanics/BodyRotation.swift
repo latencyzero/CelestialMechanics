@@ -43,7 +43,9 @@ public struct BodyOrientation : Equatable, Sendable
 	Values are from the 2015 report (Archinal et al. 2018), except Mars, which
 	uses the 2009 report's simpler linear model (the 2015 one needs a dozen
 	periodic terms to be any better). Small periodic terms for Mercury and
-	Jupiter are left out; they're hundredths of a degree.
+	Jupiter are left out; they're hundredths of a degree. The Moon's are left
+	out too, but they're not small: its libration terms reach about 4° in the pole
+	and 3.6° in W, so its near side can be off by that much.
 
 	“North” is the IAU's: the pole on the north side of the solar system's
 	invariable plane. Venus and Uranus spin retrograde, so W decreases for them,
@@ -57,23 +59,29 @@ public enum BodyRotation
 {
 	public static
 	func
-	orientation(of inPlanet: PlanetIdentifier, atDate inDate: Date) -> BodyOrientation
+	orientation(of inBody: BodyIdentifier, atDate inDate: Date) -> BodyOrientation?
 	{
-		let elements = Self.elements(for: inPlanet, atDate: inDate)
+		guard
+			let elements = Self.elements(for: inBody, atDate: inDate)
+		else
+		{
+			return nil
+		}
+
 		return Self.orientation(rightAscension: elements.rightAscension,
 								declination: elements.declination,
 								primeMeridianAngle: elements.primeMeridianAngle)
 	}
 
 	/**
-		The IAU elements for `inPlanet` at `inDate`, in degrees, with W reduced
-		to 0–360°.
+		The IAU elements for `inBody` at `inDate`, in degrees, with W reduced
+		to 0–360°, or nil for a body this build has no model for (`.unknown`).
 	*/
 
 	public static
 	func
-	elements(for inPlanet: PlanetIdentifier, atDate inDate: Date)
-		-> (rightAscension: Double, declination: Double, primeMeridianAngle: Double)
+	elements(for inBody: BodyIdentifier, atDate inDate: Date)
+		-> (rightAscension: Double, declination: Double, primeMeridianAngle: Double)?
 	{
 		//	The models use TDB, which runs about 69 s ahead of UTC. That's
 		//	nearly 0.3° of Earth's rotation, so it's worth adding…
@@ -85,7 +93,7 @@ public enum BodyRotation
 		let delta: Double
 		let w: Double
 
-		switch inPlanet
+		switch inBody
 		{
 		case .mercury:
 			alpha = 281.0103 - 0.0328 * t
@@ -127,6 +135,14 @@ public enum BodyRotation
 			alpha = 299.36 + 0.70 * sin(n)
 			delta = 43.46 - 0.51 * cos(n)
 			w = 249.978 + 541.1397757 * d - 0.48 * sin(n)
+
+		case .moon:
+			alpha = 269.9949 + 0.0031 * t
+			delta = 66.5392 + 0.0130 * t
+			w = 38.3213 + 13.17635815 * d			//	No libration terms; see above
+
+		case .unknown:
+			return nil
 		}
 
 		var reduced = w.truncatingRemainder(dividingBy: 360.0)

@@ -17,10 +17,12 @@ import Foundation
 public enum Placement : Codable, Equatable, Sendable
 {
 	/**
-		A real planet, positioned by SwiftAA. The parent is ignored.
+		A real body (a planet or the Moon), positioned by SwiftAA. The parent is
+		ignored. A body this build doesn’t know (`BodyIdentifier.unknown`) sits at
+		its parent’s position, like `.attached` with no offset.
 	*/
 
-	case ephemeris(PlanetIdentifier)
+	case ephemeris(BodyIdentifier)
 
 	/**
 		A circular, coplanar orbit around the parent (the Sun if none): stations,
@@ -31,7 +33,8 @@ public enum Placement : Codable, Equatable, Sendable
 
 	/**
 		Fixed on the parent's surface and rotating with it: cities, bases. The parent
-		must be an `.ephemeris` body, which supplies the radius and orientation.
+		must be an `.ephemeris` body, which supplies the radius and orientation. (A
+		parent this build doesn’t know has none, so the location is at its center.)
 	*/
 
 	case surface(SurfaceCoordinates)

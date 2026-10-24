@@ -11,10 +11,11 @@ import Testing
 struct
 BodyRotationTests
 {
-	@Test("Axes are orthonormal", arguments: PlanetIdentifier.allCases)
-	func axesAreOrthonormal(_ inPlanet: PlanetIdentifier)
+	@Test("Axes are orthonormal", arguments: BodyIdentifier.known)
+	func axesAreOrthonormal(_ inBody: BodyIdentifier)
+		throws
 	{
-		let orientation = BodyRotation.orientation(of: inPlanet, atDate: Self.date)
+		let orientation = try #require(BodyRotation.orientation(of: inBody, atDate: Self.date))
 
 		#expect(abs(orientation.northPole.magnitude - 1.0) < 1.0e-12)
 		#expect(abs(orientation.primeMeridian.magnitude - 1.0) < 1.0e-12)
@@ -30,7 +31,7 @@ BodyRotationTests
 	@Test("Axial tilts are about right",
 			arguments:
 			[
-				(PlanetIdentifier.earth, 23.44),
+				(BodyIdentifier.earth, 23.44),
 				(.mars, 25.19),
 				(.jupiter, 3.13),
 				(.saturn, 26.73),
@@ -38,9 +39,10 @@ BodyRotationTests
 				(.neptune, 28.32),
 				(.venus, 2.64),
 			])
-	func axialTilt(_ inPlanet: PlanetIdentifier, _ inExpectedDegrees: Double)
+	func axialTilt(_ inPlanet: BodyIdentifier, _ inExpectedDegrees: Double)
+		throws
 	{
-		let pole = BodyRotation.orientation(of: inPlanet, atDate: Self.date).northPole
+		let pole = try #require(BodyRotation.orientation(of: inPlanet, atDate: Self.date)).northPole
 		let orbitNormal = Self.orbitNormal(of: inPlanet)
 		let tilt = acos(Self.dot(pole, orbitNormal)) * 180.0 / .pi
 
@@ -52,8 +54,9 @@ BodyRotationTests
 
 	@Test("Orientation from constant elements matches a planet with constant elements")
 	func orientationFromConstantElements()
+		throws
 	{
-		let expected = BodyRotation.orientation(of: .venus, atDate: Self.date)
+		let expected = try #require(BodyRotation.orientation(of: .venus, atDate: Self.date))
 		let actual = BodyRotation.orientation(rightAscension: 272.76, declination: 67.16, w0: 160.20, spinRate: -1.4813688, atDate: Self.date)
 
 		#expect(abs(actual.northPole.x - expected.northPole.x) < 1.0e-12)
@@ -69,9 +72,10 @@ BodyRotationTests
 
 	@Test("Earth’s prime meridian faces the Sun at noon UTC")
 	func earthPrimeMeridianAtNoon()
+		throws
 	{
 		let noon = Date(timeIntervalSince1970: 1_774_008_000.0)		//	2026-03-20 12:00 UTC
-		let orientation = BodyRotation.orientation(of: .earth, atDate: noon)
+		let orientation = try #require(BodyRotation.orientation(of: .earth, atDate: noon))
 		let earth = OrbitalElements.position(of: .ephemeris(.earth), atDate: noon)
 		let towardSun = (-1.0 / earth.magnitude) * earth
 
@@ -85,10 +89,52 @@ BodyRotationTests
 		#expect(angle < 4.0)
 	}
 
+	//	The Moon is tidally locked, so its prime meridian (0°) points at Earth, give
+	//	or take libration (up to about 8° in all, and the IAU’s periodic terms
+	//	that this leaves out are a good part of that)…
+
+	@Test("The Moon’s prime meridian faces Earth")
+	func moonPrimeMeridianFacesEarth()
+		throws
+	{
+		for days in stride(from: 0.0, to: 28.0, by: 3.5)
+		{
+			let date = Self.date.addingTimeInterval(days * 86_400.0)
+			let orientation = try #require(BodyRotation.orientation(of: .moon, atDate: date))
+			let earth = OrbitalElements.position(of: .ephemeris(.earth), atDate: date)
+			let moon = OrbitalElements.position(of: .ephemeris(.moon), atDate: date)
+			let towardEarth = (1.0 / earth.distance(to: moon)) * (earth - moon)
+			let cosAngle = Self.dot(towardEarth, orientation.primeMeridian)
+			let angle = acos(min(cosAngle, 1.0)) * 180.0 / .pi
+
+			#expect(angle < 10.0)
+		}
+	}
+
+	//	The IAU’s constant pole is the Moon’s mean pole, which sits on the ecliptic
+	//	pole to within a few hundredths of a degree. The 1.54° tilt of its equator
+	//	from the ecliptic is in the periodic terms, which this leaves out…
+
+	@Test("The Moon’s mean pole is the ecliptic pole")
+	func moonMeanPole()
+		throws
+	{
+		let pole = try #require(BodyRotation.orientation(of: .moon, atDate: Self.date)).northPole
+		let tilt = acos(pole.z) * 180.0 / .pi
+
+		#expect(tilt < 0.5)
+	}
+
+	@Test("A body this build doesn’t know has no orientation")
+	func unknownBodyHasNoOrientation()
+	{
+		#expect(BodyRotation.orientation(of: .unknown("io"), atDate: Self.date) == nil)
+	}
+
 	private
 	static
 	func
-	orbitNormal(of inPlanet: PlanetIdentifier) -> CartesianPosition
+	orbitNormal(of inPlanet: BodyIdentifier) -> CartesianPosition
 	{
 		let now = OrbitalElements.position(of: .ephemeris(inPlanet), atDate: Self.date)
 		let later = OrbitalElements.position(of: .ephemeris(inPlanet), atDate: Self.date.addingTimeInterval(86_400.0))
