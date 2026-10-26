@@ -32,6 +32,13 @@ public enum Placement : Codable, Equatable, Sendable
 	case orbit(CircularOrbitElements)
 
 	/**
+		An elliptical, inclined two-body orbit around the parent (the Sun if none):
+		asteroids and other small bodies, from JPL's Small-Body Database.
+	*/
+
+	case keplerian(KeplerianOrbitElements)
+
+	/**
 		Fixed on the parent's surface and rotating with it: cities, bases. The parent
 		must be an `.ephemeris` body, which supplies the radius and orientation. (A
 		parent this build doesn’t know has none, so the location is at its center.)
@@ -64,7 +71,7 @@ public enum Placement : Codable, Equatable, Sendable
 			case .ephemeris, .transit:
 				return true
 
-			case .orbit, .surface, .attached:
+			case .orbit, .keplerian, .surface, .attached:
 				return false
 		}
 	}

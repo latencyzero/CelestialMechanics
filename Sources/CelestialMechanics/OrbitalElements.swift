@@ -40,6 +40,9 @@ public enum OrbitalElements
 		case .orbit(let inElements):
 			return inParentPosition + inElements.position(atDate: julianDate)
 
+		case .keplerian(let inElements):
+			return inParentPosition + inElements.position(atDate: julianDate)
+
 		case .surface(let inCoordinates):
 			//	Only a real body has a radius and orientation. Anything else is
 			//	treated as being at the parent's center…
