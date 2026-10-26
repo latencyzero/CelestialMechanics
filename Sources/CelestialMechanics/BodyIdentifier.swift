@@ -31,11 +31,44 @@ public enum BodyIdentifier : Hashable, Sendable, RawRepresentable, Codable
 	case neptune
 
 	/**
+		The Sun, at the origin of the heliocentric frame.
+	*/
+
+	case sun
+
+	/**
+		The dwarf planet. SwiftAA has its position (Meeus’s series, valid 1885–2099),
+		but not its physical elements.
+	*/
+
+	case pluto
+
+	/**
 		Earth’s Moon. Positioned relative to Earth (SwiftAA), but absolute as far as
 		`Placement` goes: its parent, if any, is only informational.
 	*/
 
 	case moon
+
+	/**
+		Jupiter’s four Galilean moons and Saturn’s eight classical ones, the moons
+		SwiftAA can position. Like the Moon they’re absolute as far as `Placement`
+		goes, and their `parent` (see below) is only informational.
+	*/
+
+	case io
+	case europa
+	case ganymede
+	case callisto
+
+	case mimas
+	case enceladus
+	case tethys
+	case dione
+	case rhea
+	case titan
+	case hyperion
+	case iapetus
 
 	/**
 		A body this build doesn’t know, with the string the server sent.
@@ -52,13 +85,26 @@ public enum BodyIdentifier : Hashable, Sendable, RawRepresentable, Codable
 	planets: [BodyIdentifier] = [.mercury, .venus, .earth, .mars, .jupiter, .saturn, .uranus, .neptune]
 
 	/**
-		Every body this build can position: the planets and the moons. (There’s no
-		`CaseIterable`, since `.unknown` has no single value.)
+		The moons this build can position, nearest their planet first.
 	*/
 
 	public static
 	let
-	known: [BodyIdentifier] = BodyIdentifier.planets + [.moon]
+	moons: [BodyIdentifier] =
+	[
+		.moon,
+		.io, .europa, .ganymede, .callisto,
+		.mimas, .enceladus, .tethys, .dione, .rhea, .titan, .hyperion, .iapetus,
+	]
+
+	/**
+		Every body this build can position: the Sun, the planets, Pluto and the
+		moons. (There’s no `CaseIterable`, since `.unknown` has no single value.)
+	*/
+
+	public static
+	let
+	known: [BodyIdentifier] = [.sun] + BodyIdentifier.planets + [.pluto] + BodyIdentifier.moons
 
 	/**
 		Whether this is one of the eight planets.
@@ -68,6 +114,41 @@ public enum BodyIdentifier : Hashable, Sendable, RawRepresentable, Codable
 	isPlanet: Bool
 	{
 		return Self.planets.contains(self)
+	}
+
+	/**
+		Whether this is one of the moons in `moons`.
+	*/
+
+	public var
+	isMoon: Bool
+	{
+		return self.parent != nil
+	}
+
+	/**
+		The planet a moon goes around, nil for anything else (including `.unknown`).
+		Positions don’t depend on it: a moon is `.ephemeris` and so absolute. It’s the
+		`Location` a moon should be `at`, for the hierarchy.
+	*/
+
+	public var
+	parent: BodyIdentifier?
+	{
+		switch self
+		{
+			case .moon:
+				return .earth
+
+			case .io, .europa, .ganymede, .callisto:
+				return .jupiter
+
+			case .mimas, .enceladus, .tethys, .dione, .rhea, .titan, .hyperion, .iapetus:
+				return .saturn
+
+			default:
+				return nil
+		}
 	}
 
 	/**
@@ -90,19 +171,10 @@ public enum BodyIdentifier : Hashable, Sendable, RawRepresentable, Codable
 
 	public init(rawValue inRawValue: String)
 	{
-		switch inRawValue
-		{
-			case "mercury":		self = .mercury
-			case "venus":		self = .venus
-			case "earth":		self = .earth
-			case "mars":		self = .mars
-			case "jupiter":		self = .jupiter
-			case "saturn":		self = .saturn
-			case "uranus":		self = .uranus
-			case "neptune":		self = .neptune
-			case "moon":		self = .moon
-			default:			self = .unknown(inRawValue)
-		}
+		//	`known` is every case but `.unknown`, so a string it doesn’t name is one this
+		//	build doesn’t know…
+
+		self = Self.known.first { $0.rawValue == inRawValue } ?? .unknown(inRawValue)
 	}
 
 	public var
@@ -110,15 +182,29 @@ public enum BodyIdentifier : Hashable, Sendable, RawRepresentable, Codable
 	{
 		switch self
 		{
-			case .mercury:					return "mercury"
-			case .venus:					return "venus"
-			case .earth:					return "earth"
-			case .mars:						return "mars"
-			case .jupiter:					return "jupiter"
-			case .saturn:					return "saturn"
-			case .uranus:					return "uranus"
-			case .neptune:					return "neptune"
-			case .moon:						return "moon"
+			case .mercury:				return "mercury"
+			case .venus:				return "venus"
+			case .earth:				return "earth"
+			case .mars:					return "mars"
+			case .jupiter:				return "jupiter"
+			case .saturn:				return "saturn"
+			case .uranus:				return "uranus"
+			case .neptune:				return "neptune"
+			case .moon:					return "moon"
+			case .sun:					return "sun"
+			case .pluto:				return "pluto"
+			case .io:					return "io"
+			case .europa:				return "europa"
+			case .ganymede:				return "ganymede"
+			case .callisto:				return "callisto"
+			case .mimas:				return "mimas"
+			case .enceladus:			return "enceladus"
+			case .tethys:				return "tethys"
+			case .dione:				return "dione"
+			case .rhea:					return "rhea"
+			case .titan:				return "titan"
+			case .hyperion:				return "hyperion"
+			case .iapetus:				return "iapetus"
 			case .unknown(let inRawValue):	return inRawValue
 		}
 	}

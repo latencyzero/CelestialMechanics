@@ -75,7 +75,8 @@ public enum BodyRotation
 
 	/**
 		The IAU elements for `inBody` at `inDate`, in degrees, with W reduced
-		to 0–360°, or nil for a body this build has no model for (`.unknown`).
+		to 0–360°, or nil for a body this build has no model for (`.unknown`, and for now the
+		Sun, Pluto and the moons other than ours).
 	*/
 
 	public static
@@ -141,7 +142,11 @@ public enum BodyRotation
 			delta = 66.5392 + 0.0130 * t
 			w = 38.3213 + 13.17635815 * d			//	No libration terms; see above
 
-		case .unknown:
+		case .sun, .pluto, .io, .europa, .ganymede, .callisto,
+				.mimas, .enceladus, .tethys, .dione, .rhea, .titan, .hyperion, .iapetus,
+				.unknown:
+			//	No model yet (a `Location` carries its own elements)…
+
 			return nil
 		}
 

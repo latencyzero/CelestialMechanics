@@ -11,7 +11,7 @@ import Testing
 struct
 BodyRotationTests
 {
-	@Test("Axes are orthonormal", arguments: BodyIdentifier.known)
+	@Test("Axes are orthonormal", arguments: BodyRotationTests.modeled)
 	func axesAreOrthonormal(_ inBody: BodyIdentifier)
 		throws
 	{
@@ -128,7 +128,7 @@ BodyRotationTests
 	@Test("A body this build doesn’t know has no orientation")
 	func unknownBodyHasNoOrientation()
 	{
-		#expect(BodyRotation.orientation(of: .unknown("io"), atDate: Self.date) == nil)
+		#expect(BodyRotation.orientation(of: .unknown("vesta"), atDate: Self.date) == nil)
 	}
 
 	private
@@ -152,6 +152,10 @@ BodyRotationTests
 	{
 		return inA.x * inB.x + inA.y * inB.y + inA.z * inB.z
 	}
+
+	//	The planets and our Moon. The Sun, Pluto and the other moons have no model yet…
+
+	static	let	modeled	:	[BodyIdentifier]	=	BodyIdentifier.planets + [.moon]
 
 	private	static	let	date	:	Date	=	Date(timeIntervalSince1970: 1_791_460_800.0)		//	2026-10-08 12:00 UTC
 }

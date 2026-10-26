@@ -55,10 +55,10 @@ MoonTests
 	func unknownBodyIsAtParent()
 	{
 		let parent = CartesianPosition(x: 1.0e11, y: 2.0e10, z: -3.0e9)
-		let position = OrbitalElements.position(of: .ephemeris(.unknown("io")), parentPosition: parent, atDate: Self.date)
+		let position = OrbitalElements.position(of: .ephemeris(.unknown("vesta")), parentPosition: parent, atDate: Self.date)
 
 		#expect(position == parent)
-		#expect(OrbitalElements.position(of: .ephemeris(.unknown("io")), atDate: Self.date) == CartesianPosition())
+		#expect(OrbitalElements.position(of: .ephemeris(.unknown("vesta")), atDate: Self.date) == CartesianPosition())
 	}
 
 	//	A city at 0° N, 0° E is on the near side, the side facing Earth…

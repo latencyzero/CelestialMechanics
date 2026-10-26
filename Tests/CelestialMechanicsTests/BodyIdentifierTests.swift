@@ -39,10 +39,10 @@ BodyIdentifierTests
 	func unknownRoundTrips()
 		throws
 	{
-		let json = Data("[\"io\"]".utf8)
+		let json = Data("[\"vesta\"]".utf8)
 		let decoded = try JSONDecoder().decode([BodyIdentifier].self, from: json)
 
-		#expect(decoded == [.unknown("io")])
+		#expect(decoded == [.unknown("vesta")])
 		#expect(decoded[0].isKnown == false)
 		#expect(try JSONEncoder().encode(decoded) == json)
 	}
@@ -54,10 +54,10 @@ BodyIdentifierTests
 		throws
 	{
 		let moon = Data("{\"ephemeris\":{\"_0\":\"moon\"}}".utf8)
-		let io = Data("{\"ephemeris\":{\"_0\":\"io\"}}".utf8)
+		let vesta = Data("{\"ephemeris\":{\"_0\":\"vesta\"}}".utf8)
 
 		#expect(try JSONDecoder().decode(Placement.self, from: moon) == .ephemeris(.moon))
-		#expect(try JSONDecoder().decode(Placement.self, from: io) == .ephemeris(.unknown("io")))
+		#expect(try JSONDecoder().decode(Placement.self, from: vesta) == .ephemeris(.unknown("vesta")))
 		#expect(try JSONEncoder().encode(Placement.ephemeris(.moon)) == moon)
 	}
 
@@ -67,7 +67,21 @@ BodyIdentifierTests
 		#expect(BodyIdentifier.planets.count == 8)
 		#expect(BodyIdentifier.planets.allSatisfy { $0.isPlanet })
 		#expect(BodyIdentifier.moon.isPlanet == false)
-		#expect(BodyIdentifier.unknown("io").isPlanet == false)
-		#expect(BodyIdentifier.known == BodyIdentifier.planets + [.moon])
+		#expect(BodyIdentifier.unknown("vesta").isPlanet == false)
+		#expect(BodyIdentifier.pluto.isPlanet == false)
+		#expect(BodyIdentifier.sun.isPlanet == false)
+	}
+
+	@Test("Every known body is listed once, and only moons have a parent")
+	func knownBodies()
+	{
+		#expect(Set(BodyIdentifier.known).count == BodyIdentifier.known.count)
+		#expect(BodyIdentifier.known.count == 1 + 8 + 1 + 13)
+		#expect(BodyIdentifier.moons.allSatisfy { $0.isMoon && $0.parent?.isPlanet == true })
+		#expect(BodyIdentifier.known.filter { $0.isMoon } == BodyIdentifier.moons)
+		#expect(BodyIdentifier.unknown("vesta").parent == nil)
+		#expect(BodyIdentifier.titan.parent == .saturn)
+		#expect(BodyIdentifier.io.parent == .jupiter)
+		#expect(BodyIdentifier.moon.parent == .earth)
 	}
 }

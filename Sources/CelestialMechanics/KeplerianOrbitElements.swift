@@ -36,8 +36,8 @@ public struct KeplerianOrbitElements : Codable, Equatable, Sendable
 		pole to the ecliptic of date shifts only the longitude of the ascending node.
 	*/
 
-	private static let precessionPerDay		:	Double	=	(5_028.796_195 / 3_600.0) * (Double.pi / 180.0) / 36_525.0
-	private static let j2000				:	Double	=	2_451_545.0
+	static let precessionPerDay		:	Double	=	(5_028.796_195 / 3_600.0) * (Double.pi / 180.0) / 36_525.0
+	static let j2000				:	Double	=	2_451_545.0
 
 	public init(semiMajorAxisInMeters inSemiMajorAxisInMeters: Double,
 			eccentricity inEccentricity: Double,
